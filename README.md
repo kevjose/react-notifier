@@ -123,7 +123,7 @@ We call our notification component Toast.
 This will be a simple component that takes an array and renders the same based on whether the element of the array is a function or an object
 
 ```javascript
-// src/component/Toast
+// src/components/Toast
 
 import React from 'react';
 
@@ -161,7 +161,7 @@ export default function Toast({ toast }) {
 
 we will be using `.scss` for defining the CSS
 
-> Note: Please run ``
+> Note: Please run `npm install --save node-sass` to compile `.scss` files
 
 ```css
 // styles/base.scss
