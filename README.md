@@ -2,19 +2,19 @@
 
 ## Features
 
-The notification system is built with react and no external library. This is highly reusable and can be triggered from anywhere in the application. The toast notifications will be stackable, meaning we can have multiple notification showing up at the same time, these will be capable of render a string or another react component within itself.
+The notification system is built with react and no external library. This is highly reusable and can be triggered from anywhere in the application. The toast notifications will be stackable, meaning we can have multiple notifications showing up at the same time, these will be capable of rendering a string or another react component within itself.
 
 ## Background
 
-The following assumes that the reader has a thorough understanding of react and react hooks and will be providing only a brief on the required react hooks. For a detailed understanding on react hooks please refer, [react hooks docs](https://reactjs.org/docs/hooks-intro.html).
+The following assumes that the reader has a thorough understanding of react and react hooks and will be providing only a brief on the required react hooks. For a detailed understanding of react hooks please refer, [react hooks docs](https://reactjs.org/docs/hooks-intro.html).
 
 We will be using the following hooks
 
-- `useState`, this allows us to use the react state within a functional components (this earlier used to be possible only in class based components and functional components were used only as presentational components).
+- `useState`, this allows us to use the react state within functional components (this earlier used to be possible only in class based components and functional components were used only as presentational components).
 
-- `useContext`, this hook takes a context object as an input and returns the value passed in `Context.Provider`. React context api provides a way to pass the props/data in a component tree without having to pass the props/data to every child at every level (prop drilling)
+- `useContext`, this hook takes a context object as an input and returns the value passed in `Context.Provider`. React context API provides a way to pass the props/data in a component tree without having to pass the props/data to every child at every level (prop drilling)
 
-Below is syntax for the context api for reference
+Below is the syntax for the context API for reference
 
 ```javascript
 const SampleContext = React.createContext(/*initialVAlue*/);
@@ -54,7 +54,7 @@ function todosReducer(state, action) {
   }
 }
 
-// the useReducer function keeps track of the state and returns the new state and a dispatcher funciton.
+// the useReducer function keeps track of the state and returns the new state and a dispatcher function.
 function useReducer(reducer, initialState) {
   const [state, setState] = useState(initialState);
 
@@ -90,7 +90,7 @@ $: cd react-notifier
 $: npm run start # this will start a development server at http://localhost:3000/
 ```
 
-Now open the created project in you favorite code editor, and edit `src/App.js` to have
+Now open the created project in your favorite code editor, and edit `src/App.js` to have
 
 ```javascript
 // src/App.js
@@ -120,7 +120,7 @@ We call our notification component Toast.
 
 ### Lets create the Toast Component
 
-This will be a simple component that takes an array and renders the same based on wether the element of the array is a function or an object
+This will be a simple component that takes an array and renders the same based on whether the element of the array is a function or an object
 
 ```javascript
 // src/component/Toast
@@ -159,7 +159,7 @@ export default function Toast({ toast }) {
 }
 ```
 
-we will be using `.scss` for defining the css
+we will be using `.scss` for defining the CSS
 
 > Note: Please run ``
 
@@ -233,13 +233,13 @@ $code: 'Oxygen Mono', monospace;
 }
 ```
 
-We use `position:fixed;` along with the top and right attributes to have the toast notification appear from the top-right corner of the screen.
+We use `position: fixed;` along with the top and right attributes to have the toast notification appear from the top-right corner of the screen.
 
-Subsequently we use the `display: flex;` property in the `toast-container`, to have a flexible layout
+Subsequently, we use the `display: flex;` property in the `toast-container`, to have a flexible layout
 
 To know more on flex please refer: [A complete guide to flexbox](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)
 
-Next let us define our `ToastContext` so that we can trigger the component from anywhere in the application
+Next, let us define our `ToastContext` so that we can trigger the component from anywhere in the application
 
 ```javascript
 // contexts/ToastContext.js
@@ -296,7 +296,7 @@ export const useToastContext = () => {
 
 Let's break down the above code.
 
-We initialise an empty react context using `React.createContext();`, next we prepare the actions that would be required for the notification system, these can be put in separate files if the application becomes bigger and has a lot of actions (to remove conflicting actions),
+We initialize an empty react context using `React.createContext();`, next we prepare the actions that would be required for the notification system, these can be put in separate files if the application becomes bigger and has a lot of actions (to remove conflicting actions),
 
 ```javascript
 export const ADD = 'ADD';
@@ -304,16 +304,16 @@ export const REMOVE = 'REMOVE';
 export const REMOVE_ALL = 'REMOVE_ALL';
 ```
 
-Next is the reducer function that takes the initial state as and empty array and based on the action.type pushes to the array or removes while returning a new state.
+Next is the reducer function that takes the initial state as an empty array and based on the action.type pushes to the array or removes while returning a new state.
 
-We also provide an id to all new entry in toast array, this makes it easier to remove the said target toast/notification.
+We also provide an id to all new entries in toast array, this makes it easier to remove the said target toast/notification.
 
-Next we create a Provider function which basically provide the value to the empty context created via, `<Context.Provider>`
-We combine the returned newState and the dispatcher function from the useReducer hook and send these as values via context api.
+Next we create a Provider function which provides the value to the empty context created via, `<Context.Provider>`
+We combine the returned newState and the dispatcher function from the useReducer hook and send these as values via context API.
 
 We use the `React.createPortal` to render the toast component in the document.body, this provides easier/less conflicting styling and document flow.
 
-Lastly we expose the useContext (easier to use version of `<Context.Consumer>`) hook via a custom hook.
+Lastly, we expose the useContext (an easier to use version of `<Context.Consumer>`) hook via a custom hook.
 
 Update the toast component to use the `useToastContext` hook so that it can have its own dispatcher to close the toast/notification from within the component
 
@@ -361,7 +361,7 @@ export default function Toast({ toast }) {
 }
 ```
 
-To see the above in action, lets make some basic routes and navigation using the `react-router-dom`.
+To see the above in action, let's make some basic routes and navigation using the `react-router-dom`.
 
 ```bash
 $: npm install -s react-router-dom
@@ -393,9 +393,9 @@ export const Home = () => {
 };
 ```
 
-the above is a simple component that renders a button, the onClick of the button dispatches an action with `type: ADD` some content and optionally a type of `info`or `danger` this is used to render the background color of the toast/notification.
+the above is a simple component that renders a button, the onClick of the button dispatches an action with `type: ADD` some content and optionally a type of `info` or `danger` this is used to render the background color of the toast/notification.
 
-similarly we will define some other coomponents just to show various type of toast components use cases.
+similarly we will define some other components just to show various types of toast components use cases.
 
 the final `scr/App.js` file is below
 
@@ -550,4 +550,4 @@ export default function App() {
 }
 ```
 
-A working demo of the above can be found at: [CodeSandbox link](https://kdl1u.csb.app/)
+A working demo of the above can be found at [CodeSandbox link](https://kdl1u.csb.app/)
