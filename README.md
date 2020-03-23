@@ -1,68 +1,553 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Building a reusable notification system with react hooks and context API
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+The notification system is built with react and no external library. This is highly reusable and can be triggered from anywhere in the application. The toast notifications will be stackable, meaning we can have multiple notification showing up at the same time, these will be capable of render a string or another react component within itself.
 
-### `npm start`
+## Background
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+The following assumes that the reader has a thorough understanding of react and react hooks and will be providing only a brief on the required react hooks. For a detailed understanding on react hooks please refer, [react hooks docs](https://reactjs.org/docs/hooks-intro.html).
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+We will be using the following hooks
 
-### `npm test`
+- `useState`, this allows us to use the react state within a functional components (this earlier used to be possible only in class based components and functional components were used only as presentational components).
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- `useContext`, this hook takes a context object as an input and returns the value passed in `Context.Provider`. React context api provides a way to pass the props/data in a component tree without having to pass the props/data to every child at every level (prop drilling)
 
-### `npm run build`
+Below is syntax for the context api for reference
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```javascript
+const SampleContext = React.createContext(/*initialVAlue*/);
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+// wrap the parent component with the context provider
+<SampleContext.Provider value={/*value*/}>
+  .
+  .
+  .
+  .
+  /* n level child can access the provider value using SampleContext.Consumer */
+  <SampleContext.Consumer>
+    {value => /* Component with access to value object */}
+  </SampleContext.Consumer>
+</SampleContext.Provider>
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- `useReducer`, this is a custom hook baked into react hooks, which provides a redux reducer like interface. The reducer takes an initial state and action object having type and a payload, based on the type the initial state is recreated (pure function) and returned. A dispatch function is used to trigger the reducer switch.
 
-### `npm run eject`
+The usage below of the `useReducer` is copied from the react docs.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```javascript
+// the reducer function that provides new state based on action.type
+function todosReducer(state, action) {
+  switch (action.type) {
+    case 'add':
+      return [
+        ...state,
+        {
+          text: action.text,
+          completed: false
+        }
+      ];
+    // ... other actions ...
+    default:
+      return state;
+  }
+}
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+// the useReducer function keeps track of the state and returns the new state and a dispatcher funciton.
+function useReducer(reducer, initialState) {
+  const [state, setState] = useState(initialState);
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+  function dispatch(action) {
+    const nextState = reducer(state, action);
+    setState(nextState);
+  }
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+  return [state, dispatch];
+}
 
-## Learn More
+// Sample usage of the useReducer.
+function Todos() {
+  const [todos, dispatch] = useReducer(todosReducer, []);
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+  function handleAddClick(text) {
+    dispatch({ type: 'add', text });
+  }
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+  // ...
+}
+```
 
-### Code Splitting
+## Lets build
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+> Note: we will be using create-react-app to scaffold a basic react app, also please install the latest stable version of NodeJS.
 
-### Analyzing the Bundle Size
+Create a basic react app using the `create-react-app`.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+```bash
+$: npx create-react-app react-notifier
+$: cd react-notifier
+$: npm run start # this will start a development server at http://localhost:3000/
+```
 
-### Making a Progressive Web App
+Now open the created project in you favorite code editor, and edit `src/App.js` to have
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+```javascript
+// src/App.js
+import React from 'react';
+import './App.css';
 
-### Advanced Configuration
+function App() {
+  return <div className="App">Hello</div>;
+}
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+export default App;
+```
 
-### Deployment
+Also edit `src/App.css` to have the below code.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+```css
+.App {
+  text-align: left;
+}
+```
 
-### `npm run build` fails to minify
+Next create a folder structure as below:
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+![Folder Structure](/folder_structure.png?raw=true 'Folder Structure')
+
+We call our notification component Toast.
+
+### Lets create the Toast Component
+
+This will be a simple component that takes an array and renders the same based on wether the element of the array is a function or an object
+
+```javascript
+// src/component/Toast
+
+import React from 'react';
+
+export default function Toast({ toast }) {
+  // function to decide how to render the content of the toast
+  function renderItem(content) {
+    if (typeof content === 'function') {
+      return content();
+    } else {
+      return <pre>{JSON.stringify(content, null, 2)}</pre>;
+    }
+  }
+  return (
+    <div className="toast">
+      <div className="toast-container">
+        {/* Displaying each element of the toast */}
+        {toast.map(t => {
+          return (
+            <div
+              className={`toast-container-item ${t.type ? t.type : ''}`}
+              key={t.id}
+            >
+              <span role="img" aria-label="close toast" className="toast-close">
+                &times;
+              </span>
+              {renderItem(t.content)}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+```
+
+we will be using `.scss` for defining the css
+
+> Note: Please run ``
+
+```css
+// styles/base.scss
+// base colors
+$black: #212121;
+$white: #fff;
+$gray: #e0e0e0;
+$primaryBlue: #1652f0;
+$hoverBlue: #154de0;
+$red: #d9605a;
+// fonts
+$code: 'Oxygen Mono', monospace;
+
+// styles/toast.scss
+@import './base.scss';
+.toast {
+  position: fixed;
+  top: 50px;
+  right: 10px;
+  width: 300px;
+  max-height: 90vh;
+  overflow-y: scroll;
+  font-family: $code;
+  .toast-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    .toast-container-item {
+      border: $primaryBlue solid 1px;
+      margin: 5px 0px;
+      padding: 2px;
+      border-radius: 4px;
+      width: 100%;
+      min-height: 100px;
+      word-wrap: break-word;
+      background-color: $black;
+      box-shadow: 4px 4px 15px 2px rgba(black, 0.75);
+      color: $white;
+      transition: 0.2s;
+      &:not(:first-child) {
+        margin-top: -3rem;
+      }
+      // &:hover,
+      // &:focus-within {
+      //   transform: translateX(-2rem);
+      // }
+      &:hover ~ .toast-container-item,
+      &:focus-within ~ .toast-container-item {
+        transform: translateY(3rem);
+      }
+
+      &.info {
+        border: $primaryBlue solid 1px;
+        background-color: $hoverBlue;
+      }
+      &.danger {
+        border: $red solid 1px;
+        background-color: $red;
+      }
+      .toast-close {
+        cursor: pointer;
+        position: relative;
+        top: 5px;
+        font-size: 20px;
+        font-weight: 800;
+      }
+    }
+  }
+}
+```
+
+We use `position:fixed;` along with the top and right attributes to have the toast notification appear from the top-right corner of the screen.
+
+Subsequently we use the `display: flex;` property in the `toast-container`, to have a flexible layout
+
+To know more on flex please refer: [A complete guide to flexbox](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)
+
+Next let us define our `ToastContext` so that we can trigger the component from anywhere in the application
+
+```javascript
+// contexts/ToastContext.js
+
+import React, { createContext, useReducer, useContext } from 'react';
+import { createPortal } from 'react-dom';
+import Toast from '../components/Toast';
+import '../styles/toast.scss';
+
+export const ToastContext = createContext();
+
+const initialState = [];
+
+export const ADD = 'ADD';
+export const REMOVE = 'REMOVE';
+export const REMOVE_ALL = 'REMOVE_ALL';
+
+export const toastReducer = (state, action) => {
+  switch (action.type) {
+    case ADD:
+      return [
+        ...state,
+        {
+          id: +new Date(),
+          content: action.payload.content,
+          type: action.payload.type
+        }
+      ];
+    case REMOVE:
+      return state.filter(t => t.id !== action.payload.id);
+    case REMOVE_ALL:
+      return initialState;
+    default:
+      return state;
+  }
+};
+
+export const ToastProvider = props => {
+  const [toast, toastDispatch] = useReducer(toastReducer, initialState);
+  const toastData = { toast, toastDispatch };
+  return (
+    <ToastContext.Provider value={toastData}>
+      {props.children}
+
+      {createPortal(<Toast toast={toast} />, document.body)}
+    </ToastContext.Provider>
+  );
+};
+
+export const useToastContext = () => {
+  return useContext(ToastContext);
+};
+```
+
+Let's break down the above code.
+
+We initialise an empty react context using `React.createContext();`, next we prepare the actions that would be required for the notification system, these can be put in separate files if the application becomes bigger and has a lot of actions (to remove conflicting actions),
+
+```javascript
+export const ADD = 'ADD';
+export const REMOVE = 'REMOVE';
+export const REMOVE_ALL = 'REMOVE_ALL';
+```
+
+Next is the reducer function that takes the initial state as and empty array and based on the action.type pushes to the array or removes while returning a new state.
+
+We also provide an id to all new entry in toast array, this makes it easier to remove the said target toast/notification.
+
+Next we create a Provider function which basically provide the value to the empty context created via, `<Context.Provider>`
+We combine the returned newState and the dispatcher function from the useReducer hook and send these as values via context api.
+
+We use the `React.createPortal` to render the toast component in the document.body, this provides easier/less conflicting styling and document flow.
+
+Lastly we expose the useContext (easier to use version of `<Context.Consumer>`) hook via a custom hook.
+
+Update the toast component to use the `useToastContext` hook so that it can have its own dispatcher to close the toast/notification from within the component
+
+```javascript
+// src/components/Toast.js
+import React from 'react';
+
+import { useToastContext, REMOVE } from '../contexts/ToastContext';
+
+export default function Toast({ toast }) {
+  const { toastDispatch } = useToastContext();
+  function renderItem(content) {
+    if (typeof content === 'function') {
+      return content();
+    } else {
+      return <pre>{JSON.stringify(content, null, 2)}</pre>;
+    }
+  }
+  return (
+    <div className="toast">
+      <div className="toast-container">
+        {toast.map(t => {
+          return (
+            <div
+              className={`toast-container-item ${t.type ? t.type : ''}`}
+              key={t.id}
+            >
+              <span
+                role="img"
+                aria-label="close toast"
+                className="toast-close"
+                onClick={() =>
+                  toastDispatch({ type: REMOVE, payload: { id: t.id } })
+                }
+              >
+                &times;
+              </span>
+              {renderItem(t.content)}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+```
+
+To see the above in action, lets make some basic routes and navigation using the `react-router-dom`.
+
+```bash
+$: npm install -s react-router-dom
+```
+
+Since the following will be made only to show the usage of the Toast Component, we will be defining the components for each route within `src/App.js` file.
+
+Defining the home component
+
+```javascript
+export const Home = () => {
+  const { toastDispatch } = useToastContext();
+  return (
+    <div>
+      <button
+        onClick={() =>
+          toastDispatch({
+            type: ADD,
+            payload: {
+              content: { sucess: 'OK', message: 'Hello World' }
+            }
+          })
+        }
+      >
+        Show basic notification
+      </button>
+    </div>
+  );
+};
+```
+
+the above is a simple component that renders a button, the onClick of the button dispatches an action with `type: ADD` some content and optionally a type of `info`or `danger` this is used to render the background color of the toast/notification.
+
+similarly we will define some other coomponents just to show various type of toast components use cases.
+
+the final `scr/App.js` file is below
+
+```javascript
+import React from 'react';
+import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+import './App.css';
+import { useToastContext, ADD, REMOVE_ALL } from './contexts/ToastContext';
+
+export const Home = () => {
+  const { toastDispatch } = useToastContext();
+  return (
+    <div>
+      <button
+        onClick={() =>
+          toastDispatch({
+            type: ADD,
+            payload: {
+              content: { sucess: 'OK', message: 'Hello World' }
+            }
+          })
+        }
+      >
+        Show basic notification
+      </button>
+    </div>
+  );
+};
+export const Info = () => {
+  const { toastDispatch } = useToastContext();
+  return (
+    <div>
+      <button
+        onClick={() =>
+          toastDispatch({
+            type: ADD,
+            payload: {
+              content: { sucess: 'OK', message: 'Info message' },
+              type: 'info'
+            }
+          })
+        }
+      >
+        Show Info notification
+      </button>
+    </div>
+  );
+};
+
+export const Danger = () => {
+  const { toastDispatch } = useToastContext();
+  return (
+    <div>
+      <button
+        onClick={() =>
+          toastDispatch({
+            type: ADD,
+            payload: {
+              content: { sucess: 'FAIL', message: 'Something nasty!' },
+              type: 'danger'
+            }
+          })
+        }
+      >
+        Show danger notification
+      </button>
+    </div>
+  );
+};
+
+export const CutomHTML = () => {
+  const { toastDispatch } = useToastContext();
+  return (
+    <div>
+      <button
+        onClick={() =>
+          toastDispatch({
+            type: ADD,
+            payload: {
+              content: () => {
+                return (
+                  <div>
+                    <h4>Error</h4>
+                    <p>Something nasty happened!!</p>
+                  </div>
+                );
+              },
+              type: 'danger'
+            }
+          })
+        }
+      >
+        Show danger notification with custom HTML
+      </button>
+    </div>
+  );
+};
+
+export default function App() {
+  const { toast, toastDispatch } = useToastContext();
+  function showClearAll() {
+    if (toast.length) {
+      return (
+        <button
+          onClick={() =>
+            toastDispatch({
+              type: REMOVE_ALL
+            })
+          }
+        >
+          Clear all notifications
+        </button>
+      );
+    }
+  }
+  return (
+    <div className="App">
+      <Router>
+        <ul>
+          <li>
+            <Link to="/">Home</Link>
+          </li>
+          <li>
+            <Link to="/info">Info</Link>
+          </li>
+          <li>
+            <Link to="/danger">Danger</Link>
+          </li>
+          <li>
+            <Link to="/custom-html">Custom HTML</Link>
+          </li>
+        </ul>
+        <Switch>
+          <Route exact path="/">
+            <Home />
+          </Route>
+          <Route exact path="/info">
+            <Info />
+          </Route>
+          <Route exact path="/danger">
+            <Danger />
+          </Route>
+          <Route exact path="/custom-html">
+            <CutomHTML />
+          </Route>
+        </Switch>
+      </Router>
+      <br />
+      {showClearAll()}
+    </div>
+  );
+}
+```
+
+A working demo of the above can be found at: [CodeSandbox link](https://kdl1u.csb.app/)
