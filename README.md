@@ -1,5 +1,9 @@
 # Building a reusable notification system with react hooks and context API
 
+## The problem
+
+While building a re-usable component we tend to forget what are the essential features the component itself should have. Let me explain, consider a notification/alert/toast popup component, as a component it should have the ability to render whatever children components are passed to it and it should be able to close/hide itself on click of the close button (or even close or hide itself after a set timeout). In the simplest of designs the engineer would use a prop drilling pattern and pass an onClose function to the toast component which would be able to toggle the state in the parent component that hosts our notification piece. This is by design not wrong, however, from a developer experience perspective why should the parent component host the function that would be responsible for hiding/closing the notification. This responsibility should be of the component itself. What makes the react-notifier highly reusable is the fact, that any other component using it do not have to worry about the state(hide/show or open/close) of the notification component, rather it exposes an `add` and `remove` method that takes care of the states for you. This traditionally is possible managing a global state using redux, however, in the spirit of embracing the latest react feature we would be using react hooks and the context API to achieve the same. Excited enough? Let's jump in 
+
 ## Features
 
 The notification system is built with react and no external library. This is highly reusable and can be triggered from anywhere in the application. The toast notifications will be stackable, meaning we can have multiple notifications showing up at the same time, these will be capable of rendering a string or another react component within itself.
