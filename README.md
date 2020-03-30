@@ -1,24 +1,34 @@
-# Building a reusable notification system with react hooks and context API
 
-## The problem
+# Developer experience while building react-components
 
-While building a re-usable component we tend to forget what are the essential features the component itself should have. 
+Working at a large firm with numerous applications, all having its own frontend team comes with several problems. Achieving consistency among application UX and design from one becomes challenging. A repo might use 4 spacing instead of 2 spaces in others. The ecosystem of build tools might be different.
 
-Let me explain, consider a notification/alert/toast popup component, as a component it should have the ability to render whatever children components are passed to it and it should be able to close/hide itself on click of the close button (or even close or hide itself after a set timeout). In the simplest of designs the engineer would use a prop drilling pattern and pass an onClose function to the toast component which would be able to toggle the state in the parent component that hosts our notification piece. 
+The big heads in the software industry did realize this early on and even coined a term for this - Developer Experience. 
 
-This by design is not wrong, however, from a developer experience perspective why should the parent component host the function that would be responsible for hiding/closing the notification. This responsibility should be of the component itself. What makes the react-notifier highly reusable is the fact, that any other component using it do not have to worry about the state(hide/show or open/close) of the notification component, rather it exposes an `add` and `remove` method that takes care of the states for you. This traditionally is possible managing a global state using redux, however, in the spirit of embracing the latest react feature we would be using react hooks and the context API to achieve the same. Excited enough? Let's jump in!!
+A good Developer Experience (DX) is when a developer can get their work done in an optimized manner, without getting frustrated on the way an application is bootstrapped or having to figure out how the standard way of spacing across the organization.
 
-## Features
+Talking about the React ecosystem, it has taken care of the DX from the very beginning by its component style pattern, further increasing the DX by building tooling like the [`create-react-app`](https://github.com/facebook/create-react-app), etc. Then there are design systems like [cosmos](https://github.com/auth0/cosmos) which brings consistency to the way we make applications across different repositories using the same react components.
+
+Well this is it! an application that focuses on the functionality and easy on the developer. There is more to it, at times these building blocks of application, i.e, the components in the react world tend to become less developer-friendly. Consider the most commonly used pattern in React, the prop drilling pattern, we at times pass a react component props or functionalities that the component itself should take care of. 
+
+Let me demonstrate the above with an example. Consider a notification/alert/toast popup component, as a component, it should have the ability to render whatever child components are passed to it and it should be able to close/hide itself on click of the close button (or even close or hide itself after a set timeout). In the simplest of designs the engineer would use a prop drilling pattern and pass an onClose function to the toast component which would be able to toggle the state in the parent component that hosts our notification piece.
+
+This by design is not wrong, however, from a developer experience perspective why should the parent component host the function that would be responsible for hiding/closing the notification. This responsibility should be of the component itself. What makes the react-notifier highly reusable is the fact, that any other component using it does not have to worry about the state(hide/show or open/close) of the notification component, rather it exposes an add and remove method that takes care of the states for you. 
+
+This traditionally is possible managing a global state using redux, however, in the spirit of embracing the latest react feature we would be using react hooks and the context API to achieve the same. Excited enough? Let's jump in!!
+
+
+## Building a reusable notification system with react hooks and context API
 
 The notification system is built with react and no external library. This is highly reusable and can be triggered from anywhere in the application. The toast notifications will be stackable, meaning we can have multiple notifications showing up at the same time, these will be capable of rendering a string or another react component within itself.
 
 ## Background
 
-The following assumes that the reader has a thorough understanding of react and react hooks and will be providing only a brief on the required react hooks. For a detailed understanding of react hooks please refer, [react hooks docs](https://reactjs.org/docs/hooks-intro.html).
+The following assumes that the reader has a thorough understanding of React and react hooks and will be providing only a brief on the required react hooks. For a detailed understanding of react-hooks please refer, [react hooks docs](https://reactjs.org/docs/hooks-intro.html).
 
 We will be using the following hooks
 
-- `useState`, this allows us to use the react state within functional components (this earlier used to be possible only in class based components and functional components were used only as presentational components).
+- `useState`, this allows us to use the react state within functional components (this earlier used to be possible only in class-based components and functional components were used only as presentational components).
 
 - `useContext`, this hook takes a context object as an input and returns the value passed in `Context.Provider`. React context API provides a way to pass the props/data in a component tree without having to pass the props/data to every child at every level (prop drilling)
 
@@ -558,10 +568,16 @@ export default function App() {
 }
 ```
 
-## Wrap up
-
 A working demo of the above can be found at [CodeSandbox link](https://kdl1u.csb.app/)
 
 ## Demo gif
 
 ![](react-notifier.gif)
+
+## Wrap up
+
+To sum up, think what all features of a component can be re-used and embed those to the component itself, rather than waiting for individual parent components to pass their own versions of this common functionality.
+
+The above is one of the several ways to achieve a better DX while building components for your application or even your own design system. This plays a long way in you building scalable applications that your co-developers would love to work with.
+
+Cheers! 
