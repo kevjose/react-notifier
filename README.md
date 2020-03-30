@@ -1,7 +1,7 @@
 
 # Developer experience while building react-components
 
-Working at a large firm with numerous applications, all having its own frontend team comes with several problems. Achieving consistency among application UX and design for one becomes challenging. A repo might use 4 spacing instead of 2 spaces in others. The ecosystem of build tools might be different.
+Working at a large firm with numerous applications, all having its own frontend team comes with several problems. Achieving consistency among application UX and design for one, becomes challenging. A repo might use 4 spacing instead of 2 spaces in others. The ecosystem of build tools might be different.
 
 The big heads in the software industry did realize this early on and even coined a term for this - Developer Experience. 
 
